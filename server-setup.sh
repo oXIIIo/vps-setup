@@ -483,6 +483,12 @@ optimize_kernel_parameters() {
       sed -i 's/^net.ipv4.tcp_slow_start_after_idle=.*/net.ipv4.tcp_slow_start_after_idle=0/' /etc/sysctl.conf
     fi
 
+    # Increase TCP receive and write buffers
+    ! grep -q "^net.core.rmem_max=" /etc/sysctl.conf && echo "net.core.rmem_max=16777216" >> /etc/sysctl.conf
+    ! grep -q "^net.core.wmem_max=" /etc/sysctl.conf && echo "net.core.wmem_max=16777216" >> /etc/sysctl.conf
+    grep -q "^net.core.rmem_max=" /etc/sysctl.conf && sed -i 's/^net.core.rmem_max=.*$/net.core.rmem_max=16777216/' /etc/sysctl.conf
+    grep -q "^net.core.wmem_max=" /etc/sysctl.conf && sed -i 's/^net.core.wmem_max=.*$/net.core.wmem_max=16777216/' /etc/sysctl.conf
+
     # Increase TCP buffer for unsent data (improve performance for large transfers)
     if ! grep -q "^net.ipv4.tcp_notsent_lowat" /etc/sysctl.conf; then
       echo "net.ipv4.tcp_notsent_lowat=16384" >>/etc/sysctl.conf
@@ -504,7 +510,9 @@ optimize_kernel_parameters() {
     if grep -q "^net.ipv4.tcp_slow_start_after_idle=0" /etc/sysctl.conf &&
       grep -q "^net.ipv4.tcp_notsent_lowat=16384" /etc/sysctl.conf &&
       grep -q "^net.core.default_qdisc=fq" /etc/sysctl.conf &&
-      grep -q "^net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf; then
+      grep -q "^net.ipv4.tcp_congestion_control=bbr" /etc/sysctl.conf &&
+      grep -q "^net.core.rmem_max=16777216" /etc/sysctl.conf &&
+      grep -q "^net.core.wmem_max=16777216" /etc/sysctl.conf; then
       echo "Network performance optimized successfully."
     else
       echo "Failed to optimize network performance. Please check configuration file."
